@@ -1,10 +1,61 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+
+    .stake-container {
+        @apply min-h-screen py-12 h-max pt-[15vh] lg:pt-[2vh] w-full text-white bg-scroll bg-transparent;
+    }
+
+    .connect-button{
+        @apply p-2 px-4 font-bold text-center text-main-white bg-main-green rounded hover:bg-main-white hover:text-secondary-gray;
+    }
+
+    .stake-button{
+        @apply text-xs md:text-sm p-2 px-4 font-bold text-center text-jungler-white rounded hover:bg-main-white hover:text-secondary-gray;
+    }
+
+    .after-container{
+        @apply  min-h-screen w-full text-center z-20;
+    }
+
+    .grid-image{
+        @apply w-[100px] h-[100px] md:w-[100px] md:h-[100px] rounded bg-dark-purple mx-auto;
+    }
+
+    .staking-column {
+        @apply w-full p-1 max-h-[600px];
+    }
+
+    .junglers-container{
+        @apply rounded rounded-t-lg h-max;
+    }
+
+    .junglers-container-subtitle{
+        @apply text-xs pt-0.5;
+    }
+
+    .junglers-selected{
+        @apply border-2 shadow-lg;
+    }
+
+    .staking-grid {
+        @apply relative grid grid-cols-2 md:grid-cols-4 gap-2 p-1 min-h-[300px] max-h-[400px] overflow-y-auto;
+    }
+}
+
 html,
 body {
-  padding: 0;
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-}
+    padding: 0;
+    margin: 0;
+    font-family: 'Poppins';
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+    cursor: default;
+    }
 
 a {
   color: inherit;
@@ -13,6 +64,35 @@ a {
 
 * {
   box-sizing: border-box;
+}
+
+body::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
+}
+
+.staking-grid {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.staking-grid::-webkit-scrollbar{
+    display: none
+}
+
+.main-container {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+.main-container::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
+}
+
+.nft-container {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+.nft-container::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
 }
 
 @media (prefers-color-scheme: dark) {
