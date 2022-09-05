@@ -3,10 +3,39 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { motion } from 'framer-motion'
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import { ReactElement, JSXElementConstructor, ReactFragment, ReactPortal, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createAlchemyWeb3 } from "@alch/alchemy-web3";
 import { Navbar } from '../components/navbar'
 import { JunglersImage } from '../components/placeholderImage'
 import { useWeb3Context } from '../components/web3context'
+import { Contract } from 'ethers'
+import { idList } from '../constants/imageList'
+
+const apikey = "FoOop5XfhU5_CklJIO0LQCLFc2mE_WWr"
+const web3 = createAlchemyWeb3(
+    `https://eth-mainnet.alchemyapi.io/v2/${apikey}`,
+);
+
+const JUNGLERS_CONTRACT = "0x63e8daF718B0dc39BF214F9B4DC9424841C2B267"
+const STAKING_CONTRACT = "0xD930c1C055C96aD8f58c9d6761Ab4Cbb71E176F4"
+const STAKED_JUNGLERS = "0xf79625061c8899742F5EF1c09DA1453C6d9C3796"
+
+const JUNGLERS_MIN_ABI = [
+    "function ownerOf(uint256 tokenId) public view returns (address)",
+    "function isApprovedForAll(address owner, address operator) public view returns (bool)",
+    "function setApprovalForAll(address operator, bool approved) public"
+]
+
+const STAKED_JUNGLER_ABI = [
+    "function ownerOf(uint256 tokenId) public view returns (address)",
+    "function isApprovedForAll(address owner, address operator) public view returns (bool)",
+    "function setApprovalForAll(address operator, bool approved) public"
+]
+
+const STAKING_MIN_ABI = [
+    "function stakeJunglers(uint256[] calldata tokenIds_) external",
+    "function unstakeJunglers(uint256[] calldata tokenIds_) external"
+]
 
 const Home: NextPage = () => {
     const { web3Provider, address, connect } = useWeb3Context()
@@ -18,41 +47,41 @@ const Home: NextPage = () => {
     const [isStaking, setStaking] = useState(false);
     const [isUnstaking, setUnstaking] = useState(false);
 
-    // const callSettings: any = {
-    //     owner: address,
-    //     contractAddresses: [BEASTS_CONTRACT, STAKED_BEASTS],
-    //     withMetadata: false
-    // }
+    const callSettings: any = {
+        owner: address,
+        contractAddresses: [JUNGLERS_CONTRACT, STAKED_JUNGLERS],
+        withMetadata: false
+    }
     
     const getOwnedNFTs = async () => {
         if(web3Provider){
-            // try {
-            //     setStaking(true)
-            //     setUnstaking(true)
-            //     let NFTsInWallet: any = [];
-            //     let NFTsStaking: any = [];
-            //     const nfts = await web3.alchemy.getNfts(callSettings);
-    
-            //     for(const nft of nfts.ownedNfts){
-            //         const id = Number(nft.id.tokenId);
-            //         if(nft.contract.address == BEASTS_CONTRACT){
-            //             NFTsInWallet.push(id)
-            //         }
-            //         if(nft.contract.address == STAKED_BEASTS.toLowerCase()){
-            //             NFTsStaking.push(id)
-            //         }
-                    
-            //     }
+            try {
+                setStaking(true)
+                setUnstaking(true)
+                let NFTsInWallet: any = [];
+                let NFTsStaking: any = [];
+                const nfts = await web3.alchemy.getNfts(callSettings);
                 
-            //     setOwnedNfts(NFTsInWallet);
-            //     setStakedNfts(NFTsStaking);
-            //     setStaking(false)
-            //     setUnstaking(false)
-            // } catch (err) {
-            //     console.log(err);
-            //     setStaking(false)
-            //     setUnstaking(false)
-            // }
+                for(const nft of nfts.ownedNfts){
+                    const id = Number(nft.id.tokenId);
+                    if(nft.contract.address == JUNGLERS_CONTRACT.toLowerCase()){
+                        NFTsInWallet.push(id)
+                    }
+                    if(nft.contract.address == STAKED_JUNGLERS.toLowerCase()){
+                        NFTsStaking.push(id)
+                    }
+                    
+                }
+                
+                setOwnedNfts(NFTsInWallet);
+                setStakedNfts(NFTsStaking);
+                setStaking(false)
+                setUnstaking(false)
+            } catch (err) {
+                console.log(err);
+                setStaking(false)
+                setUnstaking(false)
+            }
         }
     }
 
@@ -62,22 +91,22 @@ const Home: NextPage = () => {
 
     const stakeNFTs = async (nfts: any) => {
         try {
-            // if(nfts.length > 0) {
-            //     const approved = await approveContract(BEASTS_CONTRACT);
-            //     if(approved){
-            //         setOpen(false)
-            //         setStaking(true);
-            //         const signer = web3Provider.getSigner()
-            //         const contract = new Contract(STAKING_CONTRACT, STAKING_MIN_ABI, signer);
+            if(nfts.length > 0) {
+                const approved = await approveContract(JUNGLERS_CONTRACT);
+                if(approved){
+                    setOpen(false)
+                    setStaking(true);
+                    const signer = web3Provider.getSigner()
+                    const contract = new Contract(STAKING_CONTRACT, STAKING_MIN_ABI, signer);
 
-            //         const staked = await contract.stakeBeasts(nfts);
+                    const staked = await contract.stakeJunglers(nfts);
 
-            //         if(staked && "hash" in staked){
-            //             const txnReceipt: any = await staked.wait();
-            //             await getOwnedNFTs()
-            //         }
-            //     }
-            // }
+                    if(staked && "hash" in staked){
+                        const txnReceipt: any = await staked.wait();
+                        await getOwnedNFTs()
+                    }
+                }
+            }
         } catch (err) {
             console.log(err)
             setOpen(false)
@@ -110,21 +139,21 @@ const Home: NextPage = () => {
 
     const unstakeNFTs = async (nfts: any) => {
         try {
-            // if(nfts.length > 0) {
-            //     const approved = await approveContract(STAKED_BEASTS);
-            //     if(approved){
-            //         setOpen(false)
-            //         setUnstaking(true);
-            //         const signer = web3Provider.getSigner()
-            //         const contract = new Contract(STAKING_CONTRACT, STAKING_MIN_ABI, signer);
+            if(nfts.length > 0) {
+                const approved = await approveContract(STAKED_JUNGLERS);
+                if(approved){
+                    setOpen(false)
+                    setUnstaking(true);
+                    const signer = web3Provider.getSigner()
+                    const contract = new Contract(STAKING_CONTRACT, STAKING_MIN_ABI, signer);
     
-            //         const unstaked = await contract.unstakeBeasts(nfts);
-            //         if(unstaked && "hash" in unstaked){
-            //             const txnReceipt: any = await unstaked.wait();
-            //             await getOwnedNFTs()
-            //         }
-            //     }
-            // }
+                    const unstaked = await contract.unstakeJunglers(nfts);
+                    if(unstaked && "hash" in unstaked){
+                        const txnReceipt: any = await unstaked.wait();
+                        await getOwnedNFTs()
+                    }
+                }
+            }
         } catch (err) {
             console.log(err)
             setOpen(false)
@@ -156,30 +185,30 @@ const Home: NextPage = () => {
     }
 
     const approveContract = async (contractAddress: string) => {
-        // const signer = await web3Provider.getSigner();
-        // let nftContract: Contract;
+        const signer = await web3Provider.getSigner();
+        let nftContract: Contract;
 
-        // if(contractAddress == BEASTS_CONTRACT)
-        //     nftContract = new Contract(BEASTS_CONTRACT, BEAST_MIN_ABI, signer)
-        // else
-        //     nftContract = new Contract(STAKED_BEASTS, STAKED_BEAST_ABI, signer)
+        if(contractAddress == JUNGLERS_CONTRACT)
+            nftContract = new Contract(JUNGLERS_CONTRACT, JUNGLERS_MIN_ABI, signer)
+        else
+            nftContract = new Contract(STAKED_JUNGLERS, STAKED_JUNGLER_ABI, signer)
 
-        // let isApproved = await nftContract.isApprovedForAll(address, STAKING_CONTRACT)
+        let isApproved = await nftContract.isApprovedForAll(address, STAKING_CONTRACT)
 
-        // if(isApproved){
-        //     return isApproved
-        // }
-        // else{
-        //     setOpen(true);
-        //     const getApproval = await nftContract.setApprovalForAll(STAKING_CONTRACT, true)
-        //     if(getApproval && "hash" in getApproval){
-        //         const txnReceipt: any = await getApproval.wait();
-        //         if("logs" in txnReceipt){
-        //             return Boolean(parseInt(txnReceipt.logs[0].data))
-        //         }
-        //     }
-        //     return false
-        // }
+        if(isApproved){
+            return isApproved
+        }
+        else{
+            setOpen(true);
+            const getApproval = await nftContract.setApprovalForAll(STAKING_CONTRACT, true)
+            if(getApproval && "hash" in getApproval){
+                const txnReceipt: any = await getApproval.wait();
+                if("logs" in txnReceipt){
+                    return Boolean(parseInt(txnReceipt.logs[0].data))
+                }
+            }
+            return false
+        }
     }
 
 
@@ -232,7 +261,7 @@ const Home: NextPage = () => {
                                     </div>
                                     :
                                     <div className="staking-grid">
-                                        {ownedNfts.map((id: string | number | boolean | ReactFragment | ReactPortal | ReactElement<any, string | JSXElementConstructor<any>> | null | undefined) => (
+                                        {ownedNfts.map((id: any) => (
                                             <motion.div 
                                                 whileHover={{scale: 1.05}} 
                                                 className="junglers-container"
@@ -251,13 +280,13 @@ const Home: NextPage = () => {
                                                     }
                                                 }}
                                             >
-                                                <img src={`https://d26m6bk6d56tqa.cloudfront.net/${id}.png`} className="rounded-t"/>
+                                                <img src={`https://d3ujpwzi55x5a1.cloudfront.net/${idList[id]}`} className="rounded-t"/>
                                                 <div className="junglers-container-subtitle">
-                                                    BEAST #{id}
+                                                    Jungler #{id}
                                                 </div>
                                             </motion.div>)
                                         )}
-                                        {isStaking && <div className="absolute top-0 w-full h-full bg-black/50 flex justify-center items-center rounded-full">
+                                        {isStaking && <div className="absolute top-0 w-full h-full bg-black/50 flex justify-center items-center">
                                             <FontAwesomeIcon icon={faCircleNotch} className="h-8 animate-spin text-secondary-green"/>
                                         </div>}
                                     </div>
@@ -294,7 +323,7 @@ const Home: NextPage = () => {
                                     </div>
                                     :
                                     <div className="staking-grid">
-                                        {stakedNfts.map((id: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | ReactFragment | ReactPortal | null | undefined) => (
+                                        {stakedNfts.map((id: any) => (
                                             <motion.div 
                                                 whileHover={{scale: 1.05}} 
                                                 className="junglers-container"
@@ -313,7 +342,7 @@ const Home: NextPage = () => {
                                                     }
                                                 }}
                                             >
-                                                <img src={`https://d26m6bk6d56tqa.cloudfront.net/${id}.png`} className="rounded-t"/>
+                                                <img src={`https://d3ujpwzi55x5a1.cloudfront.net/${idList[id]}`} className="rounded-t"/>
                                                 <div className="junglers-container-subtitle">
                                                     Jungler #{id}
                                                 </div>
